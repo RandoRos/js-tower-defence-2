@@ -8,8 +8,13 @@ const cellSize = 100;
 const cellGap = 3;
 const gameGrid = [];
 const defenders = [];
+const enemies = [];
+const enemiesPosition = [];
 
+let frame = 0;
+let gameOver = false;
 let numberOfResources = 300;
+let enemiesInterval = 600;
 
 // mouse
 const mouse = {
@@ -91,15 +96,53 @@ function handleGameGrid() {
 }
 
 function handleDefenders() {
-  defenders.forEach((defender) => {
+  for (let i = defenders.length - 1; i >= 0; i--) {
+    const defender = defenders[i];
     defender.draw();
-  });
+
+    enemies.forEach((enemy) => {
+      if (collision(defender, enemy)) {
+        enemy.movement = 0;
+        defender.health -= 0.2;
+      }
+
+      if (defender && defender.health <= 0) {
+        defenders.splice(i, 1);
+        // i--; // prevent next element getting skiped
+        enemy.movement = enemy.speed;
+      }
+    });
+  }
 }
 
 function handleGameStatus() {
   ctx.fillStyle = 'gold';
-  ctx.font = '30px Arial';
+  ctx.font = '30px Orbitron';
   ctx.fillText('Resources: ' + numberOfResources, 20, 55);
+
+  if (gameOver) {
+    ctx.fillStyle = 'black';
+    ctx.font = '90px Orbitron';
+    ctx.fillText('GAME OVER', 135, 330);
+  }
+}
+
+function handleEnemies() {
+  enemies.forEach((enemy) => {
+    enemy.update();
+    enemy.draw();
+
+    if (enemy.position.x < 0) {
+      gameOver = true;
+    }
+  });
+
+  if (frame % enemiesInterval === 0) {
+    let verticalPosition = Math.floor(Math.random() * 5 + 1) * cellSize;
+    enemies.push(new Enemy(verticalPosition));
+    enemiesPosition.push(verticalPosition);
+    if (enemiesInterval > 120) enemiesInterval -= 50;
+  }
 }
 
 createGrid();
@@ -110,8 +153,10 @@ function gameloop() {
   ctx.fillRect(0, 0, controlBar.width, controlBar.height);
   handleGameGrid();
   handleDefenders();
+  handleEnemies();
   handleGameStatus();
-  requestAnimationFrame(gameloop);
+  frame++;
+  if (!gameOver) requestAnimationFrame(gameloop);
 }
 
 gameloop();
