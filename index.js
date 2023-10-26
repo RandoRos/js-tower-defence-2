@@ -7,11 +7,16 @@ canvas.height = 600;
 const cellSize = 100;
 const cellGap = 3;
 const gameGrid = [];
+const defenders = [];
+
+let numberOfResources = 300;
 
 // mouse
 const mouse = {
-  x: undefined,
-  y: undefined,
+  position: {
+    x: undefined,
+    y: undefined,
+  },
   width: 0.1,
   height: 0.1,
 };
@@ -19,13 +24,41 @@ const mouse = {
 let canvasPosition = canvas.getBoundingClientRect();
 
 canvas.addEventListener('mousemove', (event) => {
-  mouse.x = event.x - canvasPosition.left;
-  mouse.y = event.y - canvasPosition.top;
+  mouse.position.x = event.x - canvasPosition.left;
+  mouse.position.y = event.y - canvasPosition.top;
 });
 
 canvas.addEventListener('mouseleave', () => {
-  mouse.x = undefined;
-  mouse.y = undefined;
+  mouse.position.x = undefined;
+  mouse.position.y = undefined;
+});
+
+canvas.addEventListener('click', () => {
+  const gridPositionX = mouse.position.x - (mouse.position.x % cellSize);
+  const gridPositionY = mouse.position.y - (mouse.position.y % cellSize);
+  if (gridPositionY < cellSize) return;
+
+  for (let i = 0; i < defenders.length; i++) {
+    if (
+      defenders[i].position.x === gridPositionX &&
+      defenders[i].position.y === gridPositionY
+    ) {
+      return;
+    }
+  }
+
+  let defenderCost = 100;
+  if (numberOfResources >= defenderCost) {
+    defenders.push(
+      new Defender({
+        position: {
+          x: gridPositionX,
+          y: gridPositionY,
+        },
+      })
+    );
+    numberOfResources -= defenderCost;
+  }
 });
 
 const controlBar = {
@@ -50,17 +83,48 @@ function createGrid() {
 
 function handleGameGrid() {
   for (let i = 0; i < gameGrid.length; i++) {
-    gameGrid[i].draw();
+    const cell = gameGrid[i];
+    if (mouse.position.x && mouse.position.y && collision(cell, mouse)) {
+      cell.draw();
+    }
   }
+}
+
+function handleDefenders() {
+  defenders.forEach((defender) => {
+    defender.draw();
+  });
+}
+
+function handleGameStatus() {
+  ctx.fillStyle = 'gold';
+  ctx.font = '30px Arial';
+  ctx.fillText('Resources: ' + numberOfResources, 20, 55);
 }
 
 createGrid();
 
 function gameloop() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = 'blue';
   ctx.fillRect(0, 0, controlBar.width, controlBar.height);
   handleGameGrid();
+  handleDefenders();
+  handleGameStatus();
   requestAnimationFrame(gameloop);
 }
 
 gameloop();
+
+function collision(first, second) {
+  if (
+    !(
+      first.position.x > second.position.x + second.width ||
+      first.position.x + first.width < second.position.x ||
+      first.position.y > second.position.y + second.height ||
+      first.position.y + first.height < second.position.y
+    )
+  ) {
+    return true;
+  }
+}
