@@ -4,8 +4,8 @@ class Enemy {
       x: canvas.width,
       y: verticalPosition,
     };
-    this.width = cellSize;
-    this.height = cellSize;
+    this.width = cellSize - cellGap * 2;
+    this.height = cellSize - cellGap * 2;
     this.speed = Math.random() * 0.2 + 0.4;
     this.movement = this.speed;
     this.health = 100;

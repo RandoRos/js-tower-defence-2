@@ -1,8 +1,8 @@
 class Defender {
   constructor({ position = { x: 0, y: 0 } }) {
     this.position = position;
-    this.width = cellSize;
-    this.height = cellSize;
+    this.width = cellSize - cellGap * 2;
+    this.height = cellSize - cellGap * 2;
     this.shooting = false;
     this.health = 100;
     this.projectiles = [];
