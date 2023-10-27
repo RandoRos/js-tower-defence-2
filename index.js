@@ -10,7 +10,9 @@ const gameGrid = [];
 const defenders = [];
 const enemies = [];
 const enemiesPosition = [];
+const projectiles = [];
 
+let score = 0;
 let frame = 0;
 let gameOver = false;
 let numberOfResources = 300;
@@ -99,9 +101,10 @@ function handleDefenders() {
   for (let i = defenders.length - 1; i >= 0; i--) {
     const defender = defenders[i];
     defender.draw();
+    defender.update();
 
     enemies.forEach((enemy) => {
-      if (collision(defender, enemy)) {
+      if (defender && collision(defender, enemy)) {
         enemy.movement = 0;
         defender.health -= 0.2;
       }
@@ -118,7 +121,8 @@ function handleDefenders() {
 function handleGameStatus() {
   ctx.fillStyle = 'gold';
   ctx.font = '30px Orbitron';
-  ctx.fillText('Resources: ' + numberOfResources, 20, 55);
+  ctx.fillText('Score: ' + score, 20, 40);
+  ctx.fillText('Resources: ' + numberOfResources, 20, 80);
 
   if (gameOver) {
     ctx.fillStyle = 'black';
@@ -128,20 +132,52 @@ function handleGameStatus() {
 }
 
 function handleEnemies() {
-  enemies.forEach((enemy) => {
-    enemy.update();
-    enemy.draw();
+  for (let i = 0; i < enemies.length; i++) {
+    enemies[i].update();
+    enemies[i].draw();
 
-    if (enemy.position.x < 0) {
+    if (enemies[i].position.x < 0) {
       gameOver = true;
     }
-  });
+
+    if (enemies[i].health <= 0) {
+      const gainedResources = enemies[i].maxHealth / 10;
+      numberOfResources += gainedResources;
+      enemiesPosition.splice(enemiesPosition.indexOf(enemies[i].position.y), 1);
+      enemies.splice(i, 1);
+      i--;
+    }
+  }
 
   if (frame % enemiesInterval === 0) {
     let verticalPosition = Math.floor(Math.random() * 5 + 1) * cellSize;
     enemies.push(new Enemy(verticalPosition));
     enemiesPosition.push(verticalPosition);
     if (enemiesInterval > 120) enemiesInterval -= 50;
+  }
+}
+
+function handleProjectiles() {
+  for (let i = 0; i < projectiles.length; i++) {
+    projectiles[i].update();
+    projectiles[i].draw();
+
+    for (let j = 0; j < enemies.length; j++) {
+      if (
+        enemies[j] &&
+        projectiles[i] &&
+        collision(projectiles[i], enemies[j])
+      ) {
+        enemies[j].health -= projectiles[i].power;
+        projectiles.splice(i, 1);
+        i--;
+      }
+    }
+
+    if (projectiles[i] && projectiles[i].position.x > canvas.width - cellSize) {
+      projectiles.splice(i, 1);
+      i--;
+    }
   }
 }
 
@@ -153,6 +189,7 @@ function gameloop() {
   ctx.fillRect(0, 0, controlBar.width, controlBar.height);
   handleGameGrid();
   handleDefenders();
+  handleProjectiles();
   handleEnemies();
   handleGameStatus();
   frame++;

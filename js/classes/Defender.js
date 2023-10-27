@@ -20,4 +20,22 @@ class Defender {
       this.position.y + 30
     );
   }
+
+  update() {
+    if (this.shooting) {
+      this.timer++;
+      if (this.timer % 100 === 0) {
+        projectiles.push(
+          new Projectile({
+            position: {
+              x: this.position.x + 70,
+              y: this.position.y + 50,
+            },
+          })
+        );
+      }
+    } else {
+      this.timer = 0;
+    }
+  }
 }
